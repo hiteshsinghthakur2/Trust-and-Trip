@@ -1,9 +1,11 @@
 import { FileText, User, Sparkles, ArrowRight, FileDown, Upload, Loader2 } from 'lucide-react';
 import { useState, useRef } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
+// @ts-ignore
+import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
-// Set worker path for PDF.js
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+// Set worker path for PDF.js using Vite's ?url import
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 interface AgentSetupProps {
   itinerary: string;
