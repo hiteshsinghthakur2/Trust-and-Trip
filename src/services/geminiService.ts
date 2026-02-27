@@ -124,7 +124,7 @@ export async function extractPackagesFromWebsite(url: string): Promise<TravelPac
     const formattedUrl = url.startsWith('http') ? url : `https://${url}`;
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Extract all travel packages, tours, or itineraries from this website: ${formattedUrl}. 
+      contents: `Search the website ${formattedUrl} and extract all travel packages, tours, or itineraries available on it. 
       
 Return the result as a JSON array of objects. Each object must have exactly these three string keys:
 - "title": The name of the travel package or tour
@@ -134,7 +134,7 @@ Return the result as a JSON array of objects. Each object must have exactly thes
 If you cannot find any packages, return an empty array [].
 Do not include any other text, markdown formatting, or explanation. Just the raw JSON array.`,
       config: {
-        tools: [{ urlContext: {} }],
+        tools: [{ googleSearch: {} }],
         responseMimeType: "application/json",
       },
     });
