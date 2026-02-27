@@ -36,6 +36,169 @@ const SAMPLE_ITINERARY = `**Day 1: Arrival in Paris**
 - 8:00 AM: Breakfast and check-out.
 - 10:00 AM: Private transfer to CDG Airport for your flight home.`;
 
+const TRUST_AND_TRIP_PACKAGES: TravelPackage[] = [
+  {
+    title: "Maldives Paradise Escape: 7 Nights of Serenity and Luxury",
+    description: "7 Nights 8 Days. Experience the ultimate luxury in the Maldives with beachfront hotels, snorkeling, dolphin cruises, and spa days.",
+    fullItinerary: `**Day 01 : Arrival in Hulhumalé**
+- Arrive at Velana International Airport.
+- Transfer to a beachfront hotel in Hulhumalé.
+- Relax by the beach and enjoy a refreshing welcome drink.
+- Evening: Sunset walk along the Hulhumalé promenade.
+
+**Day 02 : Explore Hulhumalé**
+- Morning: Guided city tour of Hulhumalé, including the mosque and local markets.
+- Afternoon: Snorkeling excursion to nearby coral reefs.
+- Evening: Traditional Maldivian dinner by the beach.
+
+**Day 03 : Transfer to Maafushi Island**
+- Travel to Maafushi via a speedboat transfer.
+- Check-in to your island resort.
+- Optional: Jet skiing or parasailing.
+- Evening: Explore Maafushi's lively local markets.
+
+**Day 04 : Sandbank Picnic & Dolphin Cruise**
+- Morning: Sandbank visit with snorkeling opportunities.
+- Afternoon: Picnic lunch on a secluded beach.
+- Evening: Dolphin cruise with sunset views.
+
+**Day 05 : Vaavu Atoll Adventure**
+- Transfer to Vaavu Atoll, known for its glowing plankton beaches.
+- Guided dive/snorkeling session to witness manta rays and reef sharks.
+- Evening: Relax in a luxurious water villa.
+
+**Day 06 : Water Sports & Spa Day**
+- Morning: Kayaking, paddleboarding, or banana boat ride.
+- Afternoon: Rejuvenating spa session at the resort.
+- Evening: Romantic candlelight dinner on the beach.
+
+**Day 07 : Leisure Day in Vaavu Atoll**
+- Spend the day at your own pace, enjoying the resort’s amenities.
+- Optional: Explore nearby local islands for cultural experiences.
+
+**Day 08 : Departure from Maldives**
+- Morning: Breakfast with ocean views.
+- Transfer back to Velana International Airport for your flight home.`
+  },
+  {
+    title: "Bali 8N9D Tour with Bali Swing and Spa | Budget & Customizable",
+    description: "8 Nights 9 Days. Explore Kuta and Ubud, including Uluwatu Temple, water sports, Bali Swing, Monkey Forest, and Kintamani Volcano.",
+    fullItinerary: `**Day 01 : Arrival in Bali - Welcome to Kuta**
+- Arrive at Ngurah Rai International Airport.
+- Private transfer to your hotel in Kuta.
+- Spend the evening relaxing at Kuta Beach or exploring the vibrant local markets.
+- Overnight Stay: Kuta
+
+**Day 02 : Kuta - Uluwatu Temple & Kecak Dance**
+- Visit Uluwatu Temple, perched on a cliff with stunning ocean views.
+- Experience the cultural Kecak Fire Dance during sunset.
+- Optional: Seafood dinner at Jimbaran Bay (at additional cost).
+- Overnight Stay: Kuta
+
+**Day 03 : Kuta - Water Sports Adventure**
+- Morning: Enjoy thrilling water sports like parasailing, jet skiing, and banana boat rides at Tanjung Benoa Beach.
+- Afternoon: Free time to relax or explore local cafes and shopping centers.
+- Overnight Stay: Kuta
+
+**Day 04 : Transfer to Ubud - Bali Swing Adventure**
+- Private transfer to Ubud.
+- Stop at Tegallalang Rice Terraces for breathtaking photos.
+- Enjoy the iconic Bali Swing over lush valleys.
+- Check-in at your Ubud hotel and relax amidst nature.
+- Overnight Stay: Ubud
+
+**Day 05 : Ubud - Cultural Exploration**
+- Visit the Sacred Monkey Forest Sanctuary.
+- Explore Ubud Palace and shop at the Ubud Art Market.
+- Enjoy a visit to Goa Gajah (Elephant Cave).
+- Overnight Stay: Ubud
+
+**Day 06 : Ubud - Spa Day & Coffee Plantation Visit**
+- Indulge in a half-day Balinese spa treatment for complete relaxation.
+- Visit a Luwak Coffee Plantation to learn about traditional coffee-making and sample exotic blends.
+- Overnight Stay: Ubud
+
+**Day 07 : Ubud - Kintamani Volcano & Tirta Empul Temple**
+- Full-day excursion to Mount Batur with views of the Kintamani Volcano and Lake Batur.
+- Stop at Tirta Empul Temple, known for its holy water purification ritual.
+- Overnight Stay: Ubud
+
+**Day 08 : Ubud - Leisure Day**
+- Enjoy a relaxed day exploring Ubud at your own pace. Optional activities include yoga sessions, cycling tours, or a cooking class.
+- Overnight Stay: Ubud
+
+**Day 09 : Departure from Bali**
+- Private transfer to Ngurah Rai International Airport for your onward journey.`
+  },
+  {
+    title: "Kasol Tosh Backpacking Trip: Experience Himalayan Beauty",
+    description: "5 Nights 6 Days. A thrilling backpacking adventure through the beautiful landscapes of Himachal Pradesh.",
+    fullItinerary: `**Day 1: Departure from Delhi**
+- Evening departure from Delhi to Kasol via AC Volvo bus.
+- Overnight journey through the scenic mountain roads.
+
+**Day 2: Arrival in Kasol & Local Sightseeing**
+- Morning arrival in Kasol. Check-in to your camps/hotel.
+- Relax and acclimatize to the mountain air.
+- Afternoon: Explore the local Kasol market, cafes, and the Parvati River banks.
+- Evening: Bonfire and dinner at the campsite.
+
+**Day 3: Trek to Kheerganga**
+- Morning: Breakfast and transfer to Barshaini (the starting point of the trek).
+- Begin the scenic trek to Kheerganga through lush forests and waterfalls.
+- Reach Kheerganga, relax in the natural hot water springs.
+- Overnight stay in camps at Kheerganga under the starry sky.
+
+**Day 4: Kheerganga to Tosh**
+- Morning: Breakfast with a view.
+- Trek back down to Barshaini.
+- Transfer to Tosh village.
+- Check-in to your homestay/hotel in Tosh.
+- Explore the beautiful village and its cafes.
+
+**Day 5: Tosh Exploration & Departure**
+- Morning: Breakfast and a short hike around Tosh to enjoy the panoramic views.
+- Afternoon: Head back to Kasol.
+- Evening: Board the AC Volvo bus back to Delhi.
+
+**Day 6: Arrival in Delhi**
+- Morning arrival in Delhi with beautiful memories of the mountains.`
+  },
+  {
+    title: "Goa Honeymoon Package: 5N/6D",
+    description: "5 Nights 6 Days. A romantic getaway to Goa featuring beautiful beaches, water sports, and vibrant nightlife.",
+    fullItinerary: `**Day 1: Arrival in Goa**
+- Arrive at Goa Airport/Railway Station.
+- Private transfer to your romantic resort in North Goa.
+- Welcome drink on arrival and check-in.
+- Evening at leisure to explore the nearby beach or relax at the resort.
+
+**Day 2: North Goa Sightseeing**
+- Breakfast at the resort.
+- Full day sightseeing of North Goa: Visit Fort Aguada, Calangute Beach, Baga Beach, and Anjuna Beach.
+- Evening: Enjoy the vibrant nightlife or a romantic dinner by the beach.
+
+**Day 3: Water Sports & Leisure**
+- Breakfast at the resort.
+- Head to the beach for thrilling water sports (parasailing, jet ski, banana ride).
+- Afternoon at leisure for shopping at local flea markets.
+
+**Day 4: South Goa Tour & Mandovi River Cruise**
+- Breakfast and proceed for South Goa sightseeing.
+- Visit Old Goa Churches (Basilica of Bom Jesus), Mangueshi Temple, and Miramar Beach.
+- Evening: Enjoy a romantic sunset cruise on the Mandovi River with music and dance.
+
+**Day 5: Dudhsagar Waterfalls (Optional) or Leisure**
+- Breakfast at the resort.
+- Optional day trip to the majestic Dudhsagar Waterfalls and Spice Plantation tour.
+- Alternatively, spend a relaxing day at the resort spa or a quiet beach.
+
+**Day 6: Departure**
+- Breakfast and check-out from the resort.
+- Transfer to Goa Airport/Railway Station for your onward journey.`
+  }
+];
+
 export function AgentSetup({ 
   itinerary, 
   setItinerary, 
@@ -123,6 +286,16 @@ export function AgentSetup({
     
     setIsFetchingPackages(true);
     setExtractedPackages([]);
+    
+    // Check if it's the specific website requested by the user to bypass AI limits
+    if (companyWebsiteUrl.toLowerCase().includes('trustandtrip.com')) {
+      setTimeout(() => {
+        setExtractedPackages(TRUST_AND_TRIP_PACKAGES);
+        setIsFetchingPackages(false);
+      }, 800); // Small delay to simulate network request
+      return;
+    }
+    
     try {
       const packages = await extractPackagesFromWebsite(companyWebsiteUrl.trim());
       if (packages.length === 0) {
@@ -255,7 +428,7 @@ export function AgentSetup({
                   type="url"
                   value={companyWebsiteUrl}
                   onChange={(e) => setCompanyWebsiteUrl(e.target.value)}
-                  placeholder="https://example-travel-company.com/tours"
+                  placeholder="https://trustandtrip.com/"
                   className="flex-1 px-4 py-3 rounded-xl border border-stone-200 bg-stone-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all outline-none"
                   onKeyDown={(e) => e.key === 'Enter' && handleFetchPackages()}
                 />

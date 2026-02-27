@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, ArrowLeft, Bot, User, Loader2, AlertCircle, Mic, Volume2, Plane } from 'lucide-react';
+import { Send, ArrowLeft, Bot, User, Loader2, AlertCircle, Mic, Volume2, Plane, Play, Pause, Square } from 'lucide-react';
 import Markdown from 'react-markdown';
 import { createTravelAgentChat, generateSpeech } from '../services/geminiService';
 
@@ -15,8 +15,54 @@ interface Message {
   id: string;
   role: 'user' | 'model';
   text: string;
-  audioData?: string;
+  audioUrl?: string;
 }
+
+const createAudioUrl = (base64Data: string) => {
+  const binaryString = window.atob(base64Data);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  
+  const isWav = bytes.length > 4 && bytes[0] === 82 && bytes[1] === 73 && bytes[2] === 70 && bytes[3] === 70;
+  
+  let blob: Blob;
+  if (isWav) {
+    blob = new Blob([bytes], { type: 'audio/wav' });
+  } else {
+    // Add WAV header for raw PCM (16-bit, 24kHz, mono)
+    const sampleRate = 24000;
+    const numChannels = 1;
+    const wavHeader = new ArrayBuffer(44);
+    const view = new DataView(wavHeader);
+
+    const writeString = (view: DataView, offset: number, string: string) => {
+      for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
+      }
+    };
+
+    writeString(view, 0, 'RIFF');
+    view.setUint32(4, 36 + bytes.length, true);
+    writeString(view, 8, 'WAVE');
+    writeString(view, 12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, numChannels, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * numChannels * 2, true);
+    view.setUint16(32, numChannels * 2, true);
+    view.setUint16(34, 16, true);
+    writeString(view, 36, 'data');
+    view.setUint32(40, bytes.length, true);
+
+    blob = new Blob([wavHeader, bytes], { type: 'audio/wav' });
+  }
+  
+  return URL.createObjectURL(blob);
+};
 
 export function ClientChat({ itinerary, clientName, companyLogo, agentPicture, onBack }: ClientChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -26,9 +72,11 @@ export function ClientChat({ itinerary, clientName, companyLogo, agentPicture, o
   const [chatSession, setChatSession] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   
+  const [playingId, setPlayingId] = useState<string | null>(null);
+  const [isPaused, setIsPaused] = useState(false);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const activeAudioSourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const initChat = async () => {
@@ -50,9 +98,16 @@ export function ClientChat({ itinerary, clientName, companyLogo, agentPicture, o
     initChat();
     
     return () => {
-      if (audioCtxRef.current) {
-        audioCtxRef.current.close();
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
       }
+      // Cleanup object URLs
+      messages.forEach(msg => {
+        if (msg.audioUrl) {
+          URL.revokeObjectURL(msg.audioUrl);
+        }
+      });
     };
   }, [itinerary, clientName]);
 
@@ -60,58 +115,50 @@ export function ClientChat({ itinerary, clientName, companyLogo, agentPicture, o
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const playAudio = async (base64Data: string) => {
-    try {
-      if (!audioCtxRef.current) {
-        audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-      }
-      const audioCtx = audioCtxRef.current;
-      
-      if (audioCtx.state === 'suspended') {
-        await audioCtx.resume();
-      }
-
-      if (activeAudioSourceRef.current) {
-        activeAudioSourceRef.current.stop();
-        activeAudioSourceRef.current.disconnect();
-      }
-
-      const binaryString = window.atob(base64Data);
-      const len = binaryString.length;
-      const bytes = new Uint8Array(len);
-      for (let i = 0; i < len; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      
-      const isWav = bytes.length > 4 && bytes[0] === 82 && bytes[1] === 73 && bytes[2] === 70 && bytes[3] === 70;
-      
-      let audioBuffer: AudioBuffer;
-      if (isWav) {
-         audioBuffer = await audioCtx.decodeAudioData(bytes.buffer);
-      } else {
-         const int16Array = new Int16Array(bytes.buffer);
-         const float32Array = new Float32Array(int16Array.length);
-         for (let i = 0; i < int16Array.length; i++) {
-           float32Array[i] = int16Array[i] / 32768.0;
-         }
-         audioBuffer = audioCtx.createBuffer(1, float32Array.length, 24000);
-         audioBuffer.getChannelData(0).set(float32Array);
-      }
-
-      const source = audioCtx.createBufferSource();
-      source.buffer = audioBuffer;
-      source.connect(audioCtx.destination);
-      source.start();
-      activeAudioSourceRef.current = source;
-      
-      source.onended = () => {
-        if (activeAudioSourceRef.current === source) {
-          activeAudioSourceRef.current = null;
+  const handlePlayAudio = (id: string, url: string) => {
+    if (playingId === id) {
+      if (audioRef.current) {
+        if (isPaused) {
+          audioRef.current.play();
+        } else {
+          audioRef.current.pause();
         }
-      };
-    } catch (err) {
-      console.error("Failed to play audio:", err);
+      }
+      return;
     }
+
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+
+    const audio = new Audio(url);
+    audioRef.current = audio;
+
+    audio.onended = () => {
+      setPlayingId(null);
+      setIsPaused(false);
+    };
+    
+    audio.onpause = () => {
+      setIsPaused(true);
+    };
+
+    audio.onplay = () => {
+      setIsPaused(false);
+    };
+
+    audio.play().catch(e => console.error("Audio play failed:", e));
+    setPlayingId(id);
+    setIsPaused(false);
+  };
+
+  const handleStopAudio = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    setPlayingId(null);
+    setIsPaused(false);
   };
 
   const handleSend = async (textOverride?: string) => {
@@ -156,18 +203,23 @@ export function ClientChat({ itinerary, clientName, companyLogo, agentPicture, o
       }
 
       const modelText = response.text;
+      const newId = (Date.now() + 1).toString();
       
       // Generate speech for the response
       const base64Audio = await generateSpeech(modelText);
+      let audioUrl = undefined;
+      
       if (base64Audio) {
-        playAudio(base64Audio);
+        audioUrl = createAudioUrl(base64Audio);
+        // Auto-play the new audio
+        handlePlayAudio(newId, audioUrl);
       }
 
       setMessages(prev => [...prev, { 
-        id: (Date.now() + 1).toString(), 
+        id: newId, 
         role: 'model', 
         text: modelText,
-        audioData: base64Audio 
+        audioUrl 
       }]);
     } catch (err: any) {
       console.error("Chat error:", err);
@@ -286,13 +338,31 @@ export function ClientChat({ itinerary, clientName, companyLogo, agentPicture, o
               {msg.role === 'model' ? (
                 <div className="prose prose-sm prose-stone max-w-none prose-p:leading-relaxed prose-a:text-emerald-600">
                   <Markdown>{msg.text}</Markdown>
-                  {msg.audioData && (
-                    <button 
-                      onClick={() => playAudio(msg.audioData!)}
-                      className="mt-2 text-emerald-600 hover:text-emerald-700 flex items-center gap-1 text-xs font-medium"
-                    >
-                      <Volume2 size={14} /> Play Audio
-                    </button>
+                  {msg.audioUrl && (
+                    <div className="mt-3 flex items-center gap-2 bg-stone-50 border border-stone-200 rounded-lg p-1.5 w-fit">
+                      <button 
+                        onClick={() => handlePlayAudio(msg.id, msg.audioUrl!)}
+                        className="w-8 h-8 flex items-center justify-center rounded-full bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition-colors"
+                        title={playingId === msg.id && !isPaused ? "Pause" : "Play"}
+                      >
+                        {playingId === msg.id && !isPaused ? <Pause size={16} /> : <Play size={16} className="ml-0.5" />}
+                      </button>
+                      <button 
+                        onClick={handleStopAudio}
+                        disabled={playingId !== msg.id}
+                        className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors ${
+                          playingId !== msg.id 
+                            ? 'text-stone-300 cursor-not-allowed' 
+                            : 'bg-red-100 text-red-600 hover:bg-red-200'
+                        }`}
+                        title="Stop"
+                      >
+                        <Square size={14} className="fill-current" />
+                      </button>
+                      <div className="text-xs font-medium text-stone-500 px-2">
+                        {playingId === msg.id && !isPaused ? 'Playing...' : playingId === msg.id && isPaused ? 'Paused' : 'Audio Response'}
+                      </div>
+                    </div>
                   )}
                 </div>
               ) : (
