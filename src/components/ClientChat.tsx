@@ -13,7 +13,7 @@ interface Message {
   id: string;
   role: 'user' | 'model';
   text: string;
-  audioUrl?: string;
+  audioData?: string;
 }
 
 export function ClientChat({ itinerary, clientName, onBack }: ClientChatProps) {
@@ -25,7 +25,8 @@ export function ClientChat({ itinerary, clientName, onBack }: ClientChatProps) {
   const [error, setError] = useState<string | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const activeAudioSourceRef = useRef<AudioBufferSourceNode | null>(null);
 
   useEffect(() => {
     const initChat = async () => {
@@ -45,11 +46,71 @@ export function ClientChat({ itinerary, clientName, onBack }: ClientChatProps) {
       }
     };
     initChat();
+    
+    return () => {
+      if (audioCtxRef.current) {
+        audioCtxRef.current.close();
+      }
+    };
   }, [itinerary, clientName]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  const playAudio = async (base64Data: string) => {
+    try {
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      const audioCtx = audioCtxRef.current;
+      
+      if (audioCtx.state === 'suspended') {
+        await audioCtx.resume();
+      }
+
+      if (activeAudioSourceRef.current) {
+        activeAudioSourceRef.current.stop();
+        activeAudioSourceRef.current.disconnect();
+      }
+
+      const binaryString = window.atob(base64Data);
+      const len = binaryString.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      
+      const isWav = bytes.length > 4 && bytes[0] === 82 && bytes[1] === 73 && bytes[2] === 70 && bytes[3] === 70;
+      
+      let audioBuffer: AudioBuffer;
+      if (isWav) {
+         audioBuffer = await audioCtx.decodeAudioData(bytes.buffer);
+      } else {
+         const int16Array = new Int16Array(bytes.buffer);
+         const float32Array = new Float32Array(int16Array.length);
+         for (let i = 0; i < int16Array.length; i++) {
+           float32Array[i] = int16Array[i] / 32768.0;
+         }
+         audioBuffer = audioCtx.createBuffer(1, float32Array.length, 24000);
+         audioBuffer.getChannelData(0).set(float32Array);
+      }
+
+      const source = audioCtx.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(audioCtx.destination);
+      source.start();
+      activeAudioSourceRef.current = source;
+      
+      source.onended = () => {
+        if (activeAudioSourceRef.current === source) {
+          activeAudioSourceRef.current = null;
+        }
+      };
+    } catch (err) {
+      console.error("Failed to play audio:", err);
+    }
+  };
 
   const handleSend = async (textOverride?: string) => {
     const userText = textOverride || input.trim();
@@ -96,24 +157,19 @@ export function ClientChat({ itinerary, clientName, onBack }: ClientChatProps) {
       
       // Generate speech for the response
       const base64Audio = await generateSpeech(modelText);
-      let audioUrl;
       if (base64Audio) {
-        audioUrl = `data:audio/mp3;base64,${base64Audio}`;
-        if (audioRef.current) {
-          audioRef.current.src = audioUrl;
-          audioRef.current.play().catch(e => console.error("Audio play failed:", e));
-        }
+        playAudio(base64Audio);
       }
 
       setMessages(prev => [...prev, { 
         id: (Date.now() + 1).toString(), 
         role: 'model', 
         text: modelText,
-        audioUrl 
+        audioData: base64Audio 
       }]);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Chat error:", err);
-      setError("Sorry, I'm having trouble connecting right now. Please try again.");
+      setError(err.message ? `Connection Error: ${err.message}` : "Sorry, I'm having trouble connecting right now. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -162,17 +218,8 @@ export function ClientChat({ itinerary, clientName, onBack }: ClientChatProps) {
     }
   };
 
-  const playAudio = (url: string) => {
-    if (audioRef.current) {
-      audioRef.current.src = url;
-      audioRef.current.play().catch(e => console.error("Audio play failed:", e));
-    }
-  };
-
   return (
     <div className="flex flex-col h-full bg-stone-100">
-      <audio ref={audioRef} className="hidden" />
-      
       {/* Header */}
       <header className="bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between shadow-sm z-10">
         <div className="flex items-center gap-4">
@@ -220,9 +267,9 @@ export function ClientChat({ itinerary, clientName, onBack }: ClientChatProps) {
               {msg.role === 'model' ? (
                 <div className="prose prose-sm prose-stone max-w-none prose-p:leading-relaxed prose-a:text-emerald-600">
                   <Markdown>{msg.text}</Markdown>
-                  {msg.audioUrl && (
+                  {msg.audioData && (
                     <button 
-                      onClick={() => playAudio(msg.audioUrl!)}
+                      onClick={() => playAudio(msg.audioData!)}
                       className="mt-2 text-emerald-600 hover:text-emerald-700 flex items-center gap-1 text-xs font-medium"
                     >
                       <Volume2 size={14} /> Play Audio

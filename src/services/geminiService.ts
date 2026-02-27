@@ -4,9 +4,14 @@ let aiInstance: GoogleGenAI | null = null;
 
 function getAI() {
   if (!aiInstance) {
-    // Fallback to import.meta.env for Vercel deployments if process.env is not replaced
-    const apiKey = process.env.GEMINI_API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY || "missing-key";
-    aiInstance = new GoogleGenAI({ apiKey });
+    // Check Vite's import.meta.env first, then fallback to process.env
+    const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    
+    if (!apiKey) {
+      console.error("Missing Gemini API Key. Please set VITE_GEMINI_API_KEY in your Vercel environment variables.");
+    }
+
+    aiInstance = new GoogleGenAI({ apiKey: apiKey || "missing-key" });
   }
   return aiInstance;
 }
@@ -88,5 +93,7 @@ export async function generateSpeech(text: string) {
     return null;
   }
 }
+
+
 
 
