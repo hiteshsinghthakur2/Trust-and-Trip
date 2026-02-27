@@ -97,9 +97,10 @@ export async function generateSpeech(text: string) {
 export async function extractItineraryFromUrl(url: string): Promise<string> {
   const ai = getAI();
   try {
+    const formattedUrl = url.startsWith('http') ? url : `https://${url}`;
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Extract the full travel itinerary from this URL: ${url}. Return ONLY the itinerary details in a clean, readable text format. Do not include any conversational filler.`,
+      contents: `Extract the full travel itinerary from this URL: ${formattedUrl}. Return ONLY the itinerary details in a clean, readable text format. Do not include any conversational filler.`,
       config: {
         tools: [{ urlContext: {} }]
       },
@@ -120,27 +121,29 @@ export interface TravelPackage {
 export async function extractPackagesFromWebsite(url: string): Promise<TravelPackage[]> {
   const ai = getAI();
   try {
+    const formattedUrl = url.startsWith('http') ? url : `https://${url}`;
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Extract all travel packages, tours, or itineraries from this website: ${url}. For each package, provide a title, a short description, and the full detailed day-by-day itinerary.`,
+      contents: `Extract all travel packages, tours, or itineraries from this website: ${formattedUrl}. 
+      
+Return the result as a JSON array of objects. Each object must have exactly these three string keys:
+- "title": The name of the travel package or tour
+- "description": A short summary of the package
+- "fullItinerary": The complete, detailed day-by-day itinerary
+
+If you cannot find any packages, return an empty array [].
+Do not include any other text, markdown formatting, or explanation. Just the raw JSON array.`,
       config: {
         tools: [{ urlContext: {} }],
         responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              title: { type: Type.STRING, description: "The name of the travel package or tour" },
-              description: { type: Type.STRING, description: "A short summary of the package" },
-              fullItinerary: { type: Type.STRING, description: "The complete, detailed day-by-day itinerary" }
-            },
-            required: ["title", "description", "fullItinerary"]
-          }
-        }
       },
     });
-    return JSON.parse(response.text || "[]");
+    
+    let text = response.text || "[]";
+    // Clean up potential markdown formatting just in case the model ignores the mime type
+    text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+    
+    return JSON.parse(text);
   } catch (error) {
     console.error("Error extracting packages from website:", error);
     throw error;
