@@ -123,7 +123,7 @@ export async function extractPackagesFromWebsite(url: string): Promise<TravelPac
   try {
     const formattedUrl = url.startsWith('http') ? url : `https://${url}`;
     const response = await ai.models.generateContent({
-      model: "gemini-3.1-pro-preview",
+      model: "gemini-3-flash-preview",
       contents: `Search the website ${formattedUrl} and extract all travel packages, tours, or itineraries available on it. 
       
 Return the result ONLY as a valid JSON array of objects. Each object must have exactly these three string keys:
@@ -153,6 +153,7 @@ Do not include any other text, markdown formatting, citations, or explanation. J
     throw error;
   }
 }
+
 
 
 
