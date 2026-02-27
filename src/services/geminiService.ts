@@ -123,25 +123,29 @@ export async function extractPackagesFromWebsite(url: string): Promise<TravelPac
   try {
     const formattedUrl = url.startsWith('http') ? url : `https://${url}`;
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-3.1-pro-preview",
       contents: `Search the website ${formattedUrl} and extract all travel packages, tours, or itineraries available on it. 
       
-Return the result as a JSON array of objects. Each object must have exactly these three string keys:
+Return the result ONLY as a valid JSON array of objects. Each object must have exactly these three string keys:
 - "title": The name of the travel package or tour
 - "description": A short summary of the package
 - "fullItinerary": The complete, detailed day-by-day itinerary
 
 If you cannot find any packages, return an empty array [].
-Do not include any other text, markdown formatting, or explanation. Just the raw JSON array.`,
+Do not include any other text, markdown formatting, citations, or explanation. Just the raw JSON array.`,
       config: {
         tools: [{ googleSearch: {} }],
-        responseMimeType: "application/json",
+        temperature: 0.1,
       },
     });
     
     let text = response.text || "[]";
-    // Clean up potential markdown formatting just in case the model ignores the mime type
-    text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+    
+    // Extract JSON array from the response text using regex to ignore any conversational filler or citations
+    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    if (jsonMatch) {
+      text = jsonMatch[0];
+    }
     
     return JSON.parse(text);
   } catch (error) {
@@ -149,6 +153,7 @@ Do not include any other text, markdown formatting, or explanation. Just the raw
     throw error;
   }
 }
+
 
 
 

@@ -110,9 +110,9 @@ export function AgentSetup({
       setItinerary(extractedText);
       setShowUrlInput(false);
       setUrlInputValue('');
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error extracting from URL:", error);
-      alert("Failed to extract itinerary from the provided URL. Please check the link and try again.");
+      alert(`Failed to extract itinerary: ${error.message || "Unknown error"}`);
     } finally {
       setIsExtracting(false);
     }
@@ -130,9 +130,9 @@ export function AgentSetup({
       } else {
         setExtractedPackages(packages);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching packages:", error);
-      alert("Failed to fetch packages from the provided website. Please check the URL and try again.");
+      alert(`Failed to fetch packages: ${error.message || "Unknown error"}. Please try again.`);
     } finally {
       setIsFetchingPackages(false);
     }
