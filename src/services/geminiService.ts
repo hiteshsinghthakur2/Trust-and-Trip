@@ -1,6 +1,15 @@
 import { GoogleGenAI, Type, FunctionDeclaration, Modality } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let aiInstance: GoogleGenAI | null = null;
+
+function getAI() {
+  if (!aiInstance) {
+    // Fallback to import.meta.env for Vercel deployments if process.env is not replaced
+    const apiKey = process.env.GEMINI_API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY || "missing-key";
+    aiInstance = new GoogleGenAI({ apiKey });
+  }
+  return aiInstance;
+}
 
 const notifyHotelDeclaration: FunctionDeclaration = {
   name: "notifyHotel",
@@ -28,6 +37,7 @@ const getBookingLinkDeclaration: FunctionDeclaration = {
 };
 
 export async function createTravelAgentChat(itinerary: string, clientName: string) {
+  const ai = getAI();
   const systemInstruction = `You are an AI travel assistant for a travel company. You are talking to our client, ${clientName}.
 Your job is to answer their questions about their upcoming trip based ONLY on the provided itinerary.
 
@@ -56,6 +66,7 @@ ${itinerary}
 }
 
 export async function generateSpeech(text: string) {
+  const ai = getAI();
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-preview-tts",
@@ -77,4 +88,5 @@ export async function generateSpeech(text: string) {
     return null;
   }
 }
+
 
