@@ -28,7 +28,7 @@ export default function App() {
             </div>
           )}
           <div>
-            <h1 className="font-semibold text-stone-900 leading-tight">WanderAI</h1>
+            <h1 className="font-semibold text-stone-900 leading-tight">Stoner AI (AKASH)</h1>
             <p className="text-xs text-stone-500 font-medium">Travel Concierge</p>
           </div>
         </div>

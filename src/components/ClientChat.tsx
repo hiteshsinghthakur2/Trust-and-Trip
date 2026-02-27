@@ -39,7 +39,7 @@ export function ClientChat({ itinerary, clientName, companyLogo, agentPicture, o
           {
             id: 'welcome',
             role: 'model',
-            text: `Hi ${clientName}! I'm your WanderAI travel concierge. I have your itinerary ready. How can I help you with your trip today?`
+            text: `Hi ${clientName}! I'm Stoner AI (AKASH). I have your itinerary ready. How can I help you with your trip today?`
           }
         ]);
       } catch (err) {
@@ -142,7 +142,7 @@ export function ClientChat({ itinerary, clientName, companyLogo, agentPicture, o
             });
           } else if (call.name === 'getBookingLink') {
             const { activityName } = call.args;
-            const link = `https://booking.wanderai.com/${activityName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+            const link = `https://booking.stonerai.com/${activityName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
             response = await chatSession.sendMessage({
               message: [{
                 functionResponse: {
@@ -240,7 +240,7 @@ export function ClientChat({ itinerary, clientName, companyLogo, agentPicture, o
               </div>
             )}
             <div>
-              <h2 className="font-semibold text-stone-900 leading-tight">WanderAI Concierge</h2>
+              <h2 className="font-semibold text-stone-900 leading-tight">Stoner AI (AKASH)</h2>
               <p className="text-xs text-stone-500 flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
                 Online
@@ -358,7 +358,7 @@ export function ClientChat({ itinerary, clientName, companyLogo, agentPicture, o
           </div>
         </div>
         <p className="text-center text-xs text-stone-400 mt-3">
-          WanderAI can make mistakes. Check important details with your agent.
+          Stoner AI (AKASH) can make mistakes. Check important details with your agent.
         </p>
       </div>
     </div>

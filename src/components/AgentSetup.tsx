@@ -1,7 +1,7 @@
-import { FileText, User, Sparkles, ArrowRight, FileDown, Upload, Loader2, Image as ImageIcon, Link as LinkIcon, X } from 'lucide-react';
+import { FileText, User, Sparkles, ArrowRight, FileDown, Upload, Loader2, Image as ImageIcon, Link as LinkIcon, X, Globe, Search } from 'lucide-react';
 import { useState, useRef } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
-import { extractItineraryFromUrl } from '../services/geminiService';
+import { extractItineraryFromUrl, extractPackagesFromWebsite, TravelPackage } from '../services/geminiService';
 // @ts-ignore
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
@@ -50,6 +50,10 @@ export function AgentSetup({
   const [isExtracting, setIsExtracting] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [urlInputValue, setUrlInputValue] = useState('');
+  
+  const [companyWebsiteUrl, setCompanyWebsiteUrl] = useState('');
+  const [extractedPackages, setExtractedPackages] = useState<TravelPackage[]>([]);
+  const [isFetchingPackages, setIsFetchingPackages] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -111,6 +115,26 @@ export function AgentSetup({
       alert("Failed to extract itinerary from the provided URL. Please check the link and try again.");
     } finally {
       setIsExtracting(false);
+    }
+  };
+
+  const handleFetchPackages = async () => {
+    if (!companyWebsiteUrl.trim()) return;
+    
+    setIsFetchingPackages(true);
+    setExtractedPackages([]);
+    try {
+      const packages = await extractPackagesFromWebsite(companyWebsiteUrl.trim());
+      if (packages.length === 0) {
+        alert("No packages or itineraries found on this website.");
+      } else {
+        setExtractedPackages(packages);
+      }
+    } catch (error) {
+      console.error("Error fetching packages:", error);
+      alert("Failed to fetch packages from the provided website. Please check the URL and try again.");
+    } finally {
+      setIsFetchingPackages(false);
     }
   };
 
@@ -216,6 +240,63 @@ export function AgentSetup({
                   )}
                 </div>
               </div>
+            </div>
+
+            <hr className="border-stone-100" />
+
+            {/* Import Packages Section */}
+            <div>
+              <label className="flex items-center gap-2 text-sm font-medium text-stone-700 mb-2">
+                <Globe size={16} className="text-stone-400" />
+                Import Packages from Website
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={companyWebsiteUrl}
+                  onChange={(e) => setCompanyWebsiteUrl(e.target.value)}
+                  placeholder="https://example-travel-company.com/tours"
+                  className="flex-1 px-4 py-3 rounded-xl border border-stone-200 bg-stone-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all outline-none"
+                  onKeyDown={(e) => e.key === 'Enter' && handleFetchPackages()}
+                />
+                <button
+                  onClick={handleFetchPackages}
+                  disabled={isFetchingPackages || !companyWebsiteUrl.trim()}
+                  className="px-6 py-3 bg-stone-900 text-white font-medium rounded-xl hover:bg-stone-800 disabled:opacity-50 flex items-center gap-2 transition-colors"
+                >
+                  {isFetchingPackages ? <Loader2 size={18} className="animate-spin" /> : <Search size={18} />}
+                  Find Packages
+                </button>
+              </div>
+
+              {extractedPackages.length > 0 && (
+                <div className="mt-4 space-y-3">
+                  <h3 className="text-sm font-medium text-stone-700">Select a Package:</h3>
+                  <div className="grid grid-cols-1 gap-3 max-h-80 overflow-y-auto pr-2">
+                    {extractedPackages.map((pkg, idx) => (
+                      <div 
+                        key={idx} 
+                        className="p-4 rounded-xl border border-stone-200 hover:border-emerald-500 hover:bg-emerald-50 transition-colors cursor-pointer group" 
+                        onClick={() => {
+                          setItinerary(pkg.fullItinerary);
+                          // Scroll down to the itinerary textarea
+                          document.getElementById('itinerary')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }}
+                      >
+                        <div className="flex justify-between items-start gap-4">
+                          <div>
+                            <h4 className="font-semibold text-stone-900 group-hover:text-emerald-700">{pkg.title}</h4>
+                            <p className="text-sm text-stone-500 mt-1 line-clamp-2">{pkg.description}</p>
+                          </div>
+                          <button className="shrink-0 px-3 py-1.5 bg-white border border-stone-200 text-stone-600 text-xs font-medium rounded-lg group-hover:bg-emerald-600 group-hover:text-white group-hover:border-emerald-600 transition-colors">
+                            Select
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <hr className="border-stone-100" />

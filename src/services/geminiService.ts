@@ -111,6 +111,42 @@ export async function extractItineraryFromUrl(url: string): Promise<string> {
   }
 }
 
+export interface TravelPackage {
+  title: string;
+  description: string;
+  fullItinerary: string;
+}
+
+export async function extractPackagesFromWebsite(url: string): Promise<TravelPackage[]> {
+  const ai = getAI();
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Extract all travel packages, tours, or itineraries from this website: ${url}. For each package, provide a title, a short description, and the full detailed day-by-day itinerary.`,
+      config: {
+        tools: [{ urlContext: {} }],
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              title: { type: Type.STRING, description: "The name of the travel package or tour" },
+              description: { type: Type.STRING, description: "A short summary of the package" },
+              fullItinerary: { type: Type.STRING, description: "The complete, detailed day-by-day itinerary" }
+            },
+            required: ["title", "description", "fullItinerary"]
+          }
+        }
+      },
+    });
+    return JSON.parse(response.text || "[]");
+  } catch (error) {
+    console.error("Error extracting packages from website:", error);
+    throw error;
+  }
+}
+
 
 
 
