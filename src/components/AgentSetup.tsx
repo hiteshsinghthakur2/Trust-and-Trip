@@ -1,6 +1,7 @@
-import { FileText, User, Sparkles, ArrowRight, FileDown, Upload, Loader2 } from 'lucide-react';
+import { FileText, User, Sparkles, ArrowRight, FileDown, Upload, Loader2, Image as ImageIcon, Link as LinkIcon, X } from 'lucide-react';
 import { useState, useRef } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
+import { extractItineraryFromUrl } from '../services/geminiService';
 // @ts-ignore
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
@@ -12,6 +13,10 @@ interface AgentSetupProps {
   setItinerary: (val: string) => void;
   clientName: string;
   setClientName: (val: string) => void;
+  companyLogo: string | null;
+  setCompanyLogo: (val: string | null) => void;
+  agentPicture: string | null;
+  setAgentPicture: (val: string | null) => void;
   onPreview: () => void;
 }
 
@@ -31,9 +36,25 @@ const SAMPLE_ITINERARY = `**Day 1: Arrival in Paris**
 - 8:00 AM: Breakfast and check-out.
 - 10:00 AM: Private transfer to CDG Airport for your flight home.`;
 
-export function AgentSetup({ itinerary, setItinerary, clientName, setClientName, onPreview }: AgentSetupProps) {
+export function AgentSetup({ 
+  itinerary, 
+  setItinerary, 
+  clientName, 
+  setClientName, 
+  companyLogo,
+  setCompanyLogo,
+  agentPicture,
+  setAgentPicture,
+  onPreview 
+}: AgentSetupProps) {
   const [isExtracting, setIsExtracting] = useState(false);
+  const [showUrlInput, setShowUrlInput] = useState(false);
+  const [urlInputValue, setUrlInputValue] = useState('');
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const agentInputRef = useRef<HTMLInputElement>(null);
+  
   const isReady = itinerary.trim().length > 10 && clientName.trim().length > 0;
 
   const loadSample = () => {
@@ -76,6 +97,36 @@ export function AgentSetup({ itinerary, setItinerary, clientName, setClientName,
     }
   };
 
+  const handleUrlImport = async () => {
+    if (!urlInputValue.trim()) return;
+    
+    setIsExtracting(true);
+    try {
+      const extractedText = await extractItineraryFromUrl(urlInputValue.trim());
+      setItinerary(extractedText);
+      setShowUrlInput(false);
+      setUrlInputValue('');
+    } catch (error) {
+      console.error("Error extracting from URL:", error);
+      alert("Failed to extract itinerary from the provided URL. Please check the link and try again.");
+    } finally {
+      setIsExtracting(false);
+    }
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, setter: (val: string | null) => void) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setter(event.target.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
     <div className="flex-1 overflow-y-auto p-8 bg-stone-50">
       <div className="max-w-3xl mx-auto space-y-8">
@@ -97,6 +148,78 @@ export function AgentSetup({ itinerary, setItinerary, clientName, setClientName,
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-stone-200">
           <div className="space-y-6">
             
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Company Logo Upload */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-stone-700 mb-2">
+                  <ImageIcon size={16} className="text-stone-400" />
+                  Company Logo
+                </label>
+                <div className="flex items-center gap-4">
+                  {companyLogo && (
+                    <img src={companyLogo} alt="Logo" className="w-12 h-12 rounded-xl object-cover border border-stone-200" />
+                  )}
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden" 
+                    ref={logoInputRef}
+                    onChange={(e) => handleImageUpload(e, setCompanyLogo)}
+                  />
+                  <button 
+                    onClick={() => logoInputRef.current?.click()}
+                    className="text-sm font-medium text-stone-600 bg-stone-100 hover:bg-stone-200 px-4 py-2 rounded-xl transition-colors"
+                  >
+                    {companyLogo ? 'Change Logo' : 'Upload Logo'}
+                  </button>
+                  {companyLogo && (
+                    <button 
+                      onClick={() => setCompanyLogo(null)}
+                      className="text-sm text-red-500 hover:text-red-600"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Agent Picture Upload */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-stone-700 mb-2">
+                  <User size={16} className="text-stone-400" />
+                  Agent Picture
+                </label>
+                <div className="flex items-center gap-4">
+                  {agentPicture && (
+                    <img src={agentPicture} alt="Agent" className="w-12 h-12 rounded-full object-cover border border-stone-200" />
+                  )}
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden" 
+                    ref={agentInputRef}
+                    onChange={(e) => handleImageUpload(e, setAgentPicture)}
+                  />
+                  <button 
+                    onClick={() => agentInputRef.current?.click()}
+                    className="text-sm font-medium text-stone-600 bg-stone-100 hover:bg-stone-200 px-4 py-2 rounded-xl transition-colors"
+                  >
+                    {agentPicture ? 'Change Picture' : 'Upload Picture'}
+                  </button>
+                  {agentPicture && (
+                    <button 
+                      onClick={() => setAgentPicture(null)}
+                      className="text-sm text-red-500 hover:text-red-600"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <hr className="border-stone-100" />
+
             {/* Client Name */}
             <div>
               <label htmlFor="clientName" className="flex items-center gap-2 text-sm font-medium text-stone-700 mb-2">
@@ -121,7 +244,7 @@ export function AgentSetup({ itinerary, setItinerary, clientName, setClientName,
                   Itinerary Details
                 </label>
                 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <input 
                     type="file" 
                     accept=".pdf" 
@@ -130,20 +253,53 @@ export function AgentSetup({ itinerary, setItinerary, clientName, setClientName,
                     onChange={handleFileUpload}
                   />
                   <button 
+                    onClick={() => setShowUrlInput(!showUrlInput)}
+                    disabled={isExtracting}
+                    className="flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                    <LinkIcon size={14} />
+                    Import URL
+                  </button>
+                  <button 
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isExtracting}
                     className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg transition-colors"
                   >
-                    {isExtracting ? (
+                    {isExtracting && !showUrlInput ? (
                       <Loader2 size={14} className="animate-spin" />
                     ) : (
                       <Upload size={14} />
                     )}
                     Upload PDF
                   </button>
-                  <span className="text-xs text-stone-400 font-normal">or paste text</span>
                 </div>
               </div>
+              
+              {showUrlInput && (
+                <div className="mb-3 flex items-center gap-2 bg-blue-50 p-2 rounded-xl border border-blue-100">
+                  <input
+                    type="url"
+                    value={urlInputValue}
+                    onChange={(e) => setUrlInputValue(e.target.value)}
+                    placeholder="https://example.com/itinerary"
+                    className="flex-1 px-3 py-2 rounded-lg border border-blue-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onKeyDown={(e) => e.key === 'Enter' && handleUrlImport()}
+                  />
+                  <button
+                    onClick={handleUrlImport}
+                    disabled={isExtracting || !urlInputValue.trim()}
+                    className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2 transition-colors"
+                  >
+                    {isExtracting ? <Loader2 size={14} className="animate-spin" /> : 'Import'}
+                  </button>
+                  <button 
+                    onClick={() => setShowUrlInput(false)}
+                    className="p-2 text-blue-400 hover:text-blue-600"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              )}
               
               <textarea
                 id="itinerary"

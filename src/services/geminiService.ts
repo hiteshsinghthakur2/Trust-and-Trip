@@ -94,6 +94,23 @@ export async function generateSpeech(text: string) {
   }
 }
 
+export async function extractItineraryFromUrl(url: string): Promise<string> {
+  const ai = getAI();
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Extract the full travel itinerary from this URL: ${url}. Return ONLY the itinerary details in a clean, readable text format. Do not include any conversational filler.`,
+      config: {
+        tools: [{ urlContext: {} }]
+      },
+    });
+    return response.text || "";
+  } catch (error) {
+    console.error("Error extracting itinerary from URL:", error);
+    throw error;
+  }
+}
+
 
 
 

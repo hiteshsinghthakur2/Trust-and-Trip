@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, ArrowLeft, Bot, User, Loader2, AlertCircle, Mic, Volume2 } from 'lucide-react';
+import { Send, ArrowLeft, Bot, User, Loader2, AlertCircle, Mic, Volume2, Plane } from 'lucide-react';
 import Markdown from 'react-markdown';
 import { createTravelAgentChat, generateSpeech } from '../services/geminiService';
 
 interface ClientChatProps {
   itinerary: string;
   clientName: string;
+  companyLogo: string | null;
+  agentPicture: string | null;
   onBack: () => void;
 }
 
@@ -16,7 +18,7 @@ interface Message {
   audioData?: string;
 }
 
-export function ClientChat({ itinerary, clientName, onBack }: ClientChatProps) {
+export function ClientChat({ itinerary, clientName, companyLogo, agentPicture, onBack }: ClientChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -229,12 +231,21 @@ export function ClientChat({ itinerary, clientName, onBack }: ClientChatProps) {
           >
             <ArrowLeft size={20} />
           </button>
-          <div>
-            <h2 className="font-semibold text-stone-900">WanderAI Concierge</h2>
-            <p className="text-xs text-stone-500 flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
-              Online
-            </p>
+          <div className="flex items-center gap-3">
+            {companyLogo ? (
+              <img src={companyLogo} alt="Company Logo" className="w-8 h-8 rounded-lg object-cover shadow-sm" />
+            ) : (
+              <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center text-white shadow-sm">
+                <Plane size={16} />
+              </div>
+            )}
+            <div>
+              <h2 className="font-semibold text-stone-900 leading-tight">WanderAI Concierge</h2>
+              <p className="text-xs text-stone-500 flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+                Online
+              </p>
+            </div>
           </div>
         </div>
       </header>
@@ -253,11 +264,19 @@ export function ClientChat({ itinerary, clientName, onBack }: ClientChatProps) {
             key={msg.id} 
             className={`flex items-start gap-4 max-w-3xl mx-auto ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
           >
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm ${
-              msg.role === 'user' ? 'bg-stone-900 text-white' : 'bg-emerald-600 text-white'
-            }`}>
-              {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
-            </div>
+            {msg.role === 'user' ? (
+              <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm bg-stone-900 text-white">
+                <User size={16} />
+              </div>
+            ) : (
+              agentPicture ? (
+                <img src={agentPicture} alt="Agent" className="w-8 h-8 rounded-full object-cover shadow-sm shrink-0" />
+              ) : (
+                <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm bg-emerald-600 text-white">
+                  <Bot size={16} />
+                </div>
+              )
+            )}
             
             <div className={`px-5 py-3.5 rounded-2xl max-w-[85%] shadow-sm ${
               msg.role === 'user' 
@@ -285,9 +304,13 @@ export function ClientChat({ itinerary, clientName, onBack }: ClientChatProps) {
         
         {isLoading && (
           <div className="flex items-start gap-4 max-w-3xl mx-auto">
-            <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
-              <Bot size={16} />
-            </div>
+            {agentPicture ? (
+              <img src={agentPicture} alt="Agent" className="w-8 h-8 rounded-full object-cover shadow-sm shrink-0" />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                <Bot size={16} />
+              </div>
+            )}
             <div className="px-5 py-4 rounded-2xl bg-white border border-stone-100 rounded-tl-none shadow-sm flex items-center gap-2 text-stone-400">
               <Loader2 size={16} className="animate-spin" />
               <span className="text-sm font-medium">Thinking...</span>
