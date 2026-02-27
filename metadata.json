@@ -1,0 +1,5 @@
+{
+  "name": "WanderAI Concierge",
+  "description": "An AI-powered travel assistant that answers client questions based on their specific itinerary.",
+  "requestFramePermissions": []
+}
